@@ -100,7 +100,7 @@ def make_generation():
     
     Returns
     -------
-    Predictions
+    Generation
         The custom prediction class for text-conditioned image generation.
     """
-    return Predictions
+    return Generation
