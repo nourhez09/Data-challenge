@@ -43,7 +43,7 @@ class Generation(BasePrediction):
                 y_true = y_true[fold_is]
             self.y_pred = np.array(y_true, dtype=np.float32)
         elif n_samples is not None:
-            self.y_pred = np.empty(n_samples, dtype=np.float32)
+            self.y_pred = np.empty((n_samples, *img_shape), dtype=np.float32)
         else:
             raise ValueError("Must provide y_pred, y_true, or n_samples for initialization.")
         
@@ -55,12 +55,47 @@ class Generation(BasePrediction):
         Ensure that y_pred has the correct dimensions:
         (n_samples, height, width, channels)
         """
-        # if isinstance(self.y_pred, FID):
-            #return
-        # if len(self.y_pred.shape) != 4:
-            #raise ValueError(f"y_pred must be 4D (n_samples, height, width, channels), got shape {self.y_pred.shape}")
-        # if self.y_pred.shape[1:] != self.img_shape:
-            #raise ValueError(f"Expected image shape {self.img_shape}, but got {self.y_pred.shape[1:]}")
+        if isinstance(self.y_pred, FID):
+            return
+        if len(self.y_pred.shape) != 4:
+            raise ValueError(f"y_pred must be 4D (n_samples, height, width, channels), got shape {self.y_pred.shape}")
+        if self.y_pred.shape[1:] != self.img_shape:
+            raise ValueError(f"Expected image shape {self.img_shape}, but got {self.y_pred.shape[1:]}")
+
+    @property
+    def valid_indexes(self):
+        """
+        Return valid indices for 4D image predictions.
+        
+        For image predictions, we consider an image valid if the first pixel of the first channel is not NaN.
+        """
+        return ~np.isnan(self.y_pred[:, 0, 0, 0])
+    
+    def set_valid_in_train(self, predictions, test_is):
+        """
+        Set a cross-validation slice for Generation predictions.
+
+        Parameters
+        ----------
+        predictions : Generation
+            A Generation instance with predictions to insert.
+        test_is : array-like of booleans or indices
+            The indices corresponding to the current test split.
+        """
+        # Ensure assignment is done on the full image tensor (all channels, height, width)
+        self.y_pred[test_is, ...] = predictions.y_pred
+    
+    def set_slice(self, valid_indexes):
+        """
+        Extract a subset of predictions based on the given valid indexes.
+        
+        Parameters
+        ----------
+        valid_indexes : array-like
+            Indices of the valid predictions to keep.
+        """
+        self.y_pred = self.y_pred[valid_indexes]
+
 
     @classmethod
     def combine(cls, predictions_list, index_list=None):

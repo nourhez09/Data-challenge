@@ -125,8 +125,8 @@ def _get_data(path=".", split="train"):
     # If quick-test mode is enabled, only select a small subset of the data.
     if os.environ.get("RAMP_TEST_MODE", False):
         # For example, only use the first 20 samples.
-        X = X[:30]
-        y = y[:30]
+        X = X[:10]
+        y = y[:10]
 
     return X, y
 
