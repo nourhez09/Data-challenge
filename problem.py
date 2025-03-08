@@ -22,7 +22,7 @@ class utils:
     """Utility functions helpful in the challenge."""
 
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    from ramp_custom import (clip_score, FID,)
+    from ramp_custom import (FID,)
     from ramp_custom import PredictionType_generation as ptg
 
 
@@ -30,7 +30,7 @@ problem_title = "Text-Conditioned Image Generation for Interior Design"
 
 Predictions = utils.ptg.Generation
 workflow = ConditionedImageGenerator()
-score_type_1 = utils.clip_score.CLIPScore(precision=3)
+#score_type_1 = utils.clip_score.CLIPScore(precision=3)
 score_type_2 = utils.FID.FID(precision=3)
 # score_types = [
 #     # The official score combines the two scores with weights 2/3 and 1/3.
@@ -40,8 +40,8 @@ score_type_2 = utils.FID.FID(precision=3)
 # ]
 
 score_types = [
-    #utils.FID.FID(precision=3),
-    utils.clip_score.CLIPScore(precision=3),
+    utils.FID.FID(precision=3),
+    #utils.clip_score.CLIPScore(precision=3),
 ]
 
 
