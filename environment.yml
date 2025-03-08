@@ -1,5 +1,6 @@
 name: ramp-template-kit
 channels:
+  - defaults
   - conda-forge
 dependencies:
   - joblib
@@ -10,3 +11,4 @@ dependencies:
   - pip
   - pip:
     - ramp-workflow
+    - -r requirements.txt

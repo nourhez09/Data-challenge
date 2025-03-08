@@ -1,4 +1,4 @@
-# Template Kit for RAMP challenge
+# From What You Say to Where You Stay : Designing Interior Spaces with AI 
 
 [![Build status](https://github.com/ramp-kits/template-kit/actions/workflows/test.yml/badge.svg)](https://github.com/ramp-kits/template-kit/actions/workflows/test.yml)
 
