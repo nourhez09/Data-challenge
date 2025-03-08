@@ -5,8 +5,9 @@ y_pred should be a 4D numpy array with shape:
     (n_samples, height, width, channels)
 where each element corresponds to a generated image.
 """
-
+import warnings
 import numpy as np
+from ramp_custom.FID import FID
 from rampwf.prediction_types.base import BasePrediction
 
 class Generation(BasePrediction):
@@ -17,7 +18,7 @@ class Generation(BasePrediction):
     It verifies that the images have the expected dimensions and provides
     functionality to combine multiple predictions (e.g., from cross-validation or ensembling).
     """
-    def __init__(self, y_pred=None, y_true=None, n_samples=None, img_shape=(128, 128, 3)):
+    def __init__(self, y_pred=None, y_true=None, n_samples=None, img_shape=(3, 128, 128), fold_is=None):
         """
         Initialize the Generation object.
 
@@ -33,12 +34,16 @@ class Generation(BasePrediction):
             Expected shape of each generated image (height, width, channels).
         """
         if y_pred is not None:
+            if fold_is is not None:
+                y_pred = y_pred[fold_is]
             self.y_pred = np.array(y_pred, dtype=np.float32)
-        if y_true is not None:
+        elif y_true is not None:
             # Initialize with zeros; shape inferred from y_true's first dimension.
-            self.y_pred = np.zeros((y_true.shape[0], *img_shape), dtype=np.float32)
-        if n_samples is not None:
-            self.y_pred = np.zeros((n_samples, *img_shape), dtype=np.float32)
+            if fold_is is not None:
+                y_true = y_true[fold_is]
+            self.y_pred = np.array(y_true, dtype=np.float32)
+        elif n_samples is not None:
+            self.y_pred = np.empty(n_samples, dtype=np.float32)
         else:
             raise ValueError("Must provide y_pred, y_true, or n_samples for initialization.")
         
@@ -50,13 +55,15 @@ class Generation(BasePrediction):
         Ensure that y_pred has the correct dimensions:
         (n_samples, height, width, channels)
         """
-        if len(self.y_pred.shape) != 4:
-            raise ValueError(f"y_pred must be 4D (n_samples, height, width, channels), got shape {self.y_pred.shape}")
-        if self.y_pred.shape[1:] != self.img_shape:
-            raise ValueError(f"Expected image shape {self.img_shape}, but got {self.y_pred.shape[1:]}")
+        # if isinstance(self.y_pred, FID):
+            #return
+        # if len(self.y_pred.shape) != 4:
+            #raise ValueError(f"y_pred must be 4D (n_samples, height, width, channels), got shape {self.y_pred.shape}")
+        # if self.y_pred.shape[1:] != self.img_shape:
+            #raise ValueError(f"Expected image shape {self.img_shape}, but got {self.y_pred.shape[1:]}")
 
     @classmethod
-    def combine(cls, predictions_list):
+    def combine(cls, predictions_list, index_list=None):
         """
         Combine multiple Predictions instances by averaging their pixel values.
         
@@ -72,6 +79,8 @@ class Generation(BasePrediction):
             A new Predictions instance containing the averaged images.
         """
         # Stack y_pred from each prediction instance (resulting shape: (n_models, n_samples, h, w, c))
+        if index_list is None:  # we combine the full list
+            index_list = range(len(predictions_list))
         y_comb_list = np.array([pred.y_pred for pred in predictions_list])
         # Compute the mean across the first axis (i.e. across different predictions)
         with warnings.catch_warnings():

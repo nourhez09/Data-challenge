@@ -39,8 +39,8 @@ class FID(BaseScoreType):
             The computed FID score.
         """
         # Flatten images to vectors
-        y_true_flat = y_true.reshape(y_true.shape[0], -1)
-        y_pred_flat = y_pred.reshape(y_pred.shape[0], -1)
+        y_true_flat = y_true.mean(axis=(1,2))
+        y_pred_flat = y_pred.mean(axis=(1,2))
         
         # Compute mean vectors
         mu_true = np.mean(y_true_flat, axis=0)

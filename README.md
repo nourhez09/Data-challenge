@@ -4,14 +4,11 @@
 
 ## Introduction
 
-The data comes from the paper https://arxiv.org/abs/2407.05980. The paper provides a dataset for advanced Multi-Modal Interior Scene (MMIS) generation. Each image within the original dataset is accompanied by its corresponding textual description and an audio recording of that description, providing rich and diverse sources of information for scene generation and recognition. MMIS encompasses a wide range of interior
-spaces, capturing various styles, layouts, and furnishings.
+The challenge we propose, consists in generating room designs based on text descriptions. The goal then is to create a model that can generate an image of a room that matches the description provided in text. This could be particularly valuable for interior designers, who can use such a model to visualize a room just from a description. Depending on the specificity of the text, we expect the model to either follow precise details or take creative liberties in generating the type of room featured—for instance, if the text does not provide any hints about it.  
 
-From this data, we chose only 4 types of styles: Art-Deco, Coastal, Rustic, and Traditional. Also, we removed the images that did not have textual captions. So, the final sizes are 11702 for the training set, 1655 for the public test, 1656 for the private one.
+ The data for this challenge is public and comes from a 2024 released paper (https://arxiv.org/abs/2407.05980) of Kassab et al. , which provides a rich dataset for Multi-Modal Interior Scene (MMIS) generation. Each image in the dataset is accompanied by a textual description and an audio recording, offering multiple sources of information for scene generation and recognition. The dataset covers a wide range of interior styles, layouts, and furnishings, capturing various design aesthetics. For this challenge, we've focused on four specific interior styles: Art-Deco, Coastal, Rustic, and Traditional, which we reorganized appropriately for our needs. After filtering out images without corresponding textual captions, the final dataset we use here includes **11,702 images for training, 1,655 for the public test set, and 1,656 for the private test set. 
 
-The main task of this challenge is to make conditional reconstruction of images. In our dataset images paired with their captions. Based on the image and caption the main goal to learn a model that is capable to reconstruct the original image. The provided baseline is a VAE model. The target metric is MSE. 
-
-Initially we wanted to generate images conditionally on their captions. However, this task seemed to complicated using this dataset and given our resources. So, we decided to try simplier taks conditional reconstuction. It is also an important task. If we had a good model for image reconstruction we could use it in severeal ways like restoring, compression images and improving their quality. So, we believe that the task is still useful.
+This task is particularly important in real-life applications such as interior design and home planning, where customers often formulate their design ideas through textual descriptions. By turning these descriptions into visual representations, we particularly simplify the room design process, promote diversity in design choices, and save time.
 
 
 

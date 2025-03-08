@@ -1,6 +1,9 @@
 import os
 import numpy as np
 from rampwf.utils.importing import import_module_from_source
+from torch.utils.data import TensorDataset, DataLoader
+import torch
+from torch.utils.data import Dataset
 
 class ConditionedImageGenerator(object):
     """
@@ -17,7 +20,7 @@ class ConditionedImageGenerator(object):
     """
     
     # Define the required submission file(s)
-    workflow_element_names = ['ConditionedImageGenerator']
+    workflow_element_names = ['CondImageGenerator']
 
     def __init__(self):
         pass
@@ -53,12 +56,19 @@ class ConditionedImageGenerator(object):
             sanitize=True
         )
         # Expect the submission to have a function named get_generator()
-        model = generator_module.ConditionedImageGenerator()
+        model = generator_module.ConditionalVAE()
         # Train the generator using the training data (text embeddings and images)
-        model.fit(X_train, y_train)
+        #convert X_train, y_train to torch tensors
+        X_train = torch.tensor(X_train)
+        y_train = torch.tensor(y_train)
+        #create dataloader
+        dataset = TensorDataset(X_train, y_train)
+        batch_size = 64
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        model.fit(dataloader)
         return model
 
-    def test_submission(self, trained_model, X_test):
+    def test_submission(self, trained_model, X_test, y_test=None):
         """
         Generate images from test text embeddings.
 
@@ -68,11 +78,25 @@ class ConditionedImageGenerator(object):
             The generator model returned by train_submission.
         X_test : numpy array
             Array of test text embeddings, expected shape: (n_samples, 768).
+        y_test : numpy array
+            Array of test images, expected shape: (n_samples, height, width, channels).
 
         Returns
         -------
         numpy array
             Array of generated images, expected shape: (n_samples, height, width, channels).
         """
-        y_pred = trained_model.predict(X_test)
+        #convert X_test, y_test to torch tensors
+        X_test = torch.tensor(X_test)
+        if y_test is None:
+            y_test = torch.zeros((X_test.shape[0], 128, 128, 3))
+        else:
+            y_test = torch.tensor(y_test)
+        #create dataloader
+        dataset = TensorDataset(X_test, y_test)
+        batch_size = 64
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        y_pred = trained_model.predict(dataloader)
+        if isinstance(y_pred, torch.Tensor):
+            y_pred = y_pred.detach().cpu().numpy()
         return y_pred
