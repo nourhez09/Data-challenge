@@ -29,7 +29,7 @@ usage.
 ### Challenge description
 
 Get started on this RAMP with the
-[dedicated notebook](template_starting_kit.ipynb).
+[dedicated notebook](Interior_Design_starting_kit.ipynb).
 
 ### Test a submission
 
