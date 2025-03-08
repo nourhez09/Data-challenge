@@ -30,14 +30,7 @@ problem_title = "Text-Conditioned Image Generation for Interior Design"
 
 Predictions = utils.ptg.Generation
 workflow = ConditionedImageGenerator()
-#score_type_1 = utils.clip_score.CLIPScore(precision=3)
 score_type_2 = utils.FID.FID(precision=3)
-# score_types = [
-#     # The official score combines the two scores with weights 2/3 and 1/3.
-#     rw.score_types.Combined(
-#         name='combined', score_types=[score_type_1, score_type_2],
-#         weights=[1. /3 , 2. / 3], precision=3),
-# ]
 
 score_types = [
     utils.FID.FID(precision=3),
