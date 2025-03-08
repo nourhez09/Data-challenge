@@ -1,48 +1,188 @@
+import os
+import sys
+import pickle
+import numpy as np
+from sklearn.model_selection import GroupKFold
+import re
+from collections import Counter
 import rampwf as rw
+from sklearn.model_selection import KFold
 
-import pandas as pd
-from pathlib import Path
 
-from sklearn.model_selection import StratifiedShuffleSplit
+import sys
+import os
 
-problem_title = 'Template RAMP kit to create data challenges'
+# Get the absolute path of the directory containing ramp_custom
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-_prediction_label_names = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+from ramp_custom.workflow_ConditionedImageGenerator import ConditionedImageGenerator
+from ramp_custom.prepare_data import prepare_data
 
-# A type (class) which will be used to create wrapper objects for y_pred
-Predictions = rw.prediction_types.make_multiclass(
-    label_names=_prediction_label_names
-)
+class utils:
+    """Utility functions helpful in the challenge."""
 
-# An object implementing the workflow
-workflow = rw.workflows.Estimator()
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    from ramp_custom import (FID,)
+    from ramp_custom import PredictionType_generation as ptg
+
+
+problem_title = "Text-Conditioned Image Generation for Interior Design"
+
+Predictions = utils.ptg.Generation
+workflow = ConditionedImageGenerator()
+score_type_2 = utils.FID.FID(precision=3)
 
 score_types = [
-    rw.score_types.Accuracy(name='accuracy', precision=4),
+    utils.FID.FID(precision=3),
+    #utils.clip_score.CLIPScore(precision=3),
 ]
 
 
-def get_cv(X, y):
-    cv = StratifiedShuffleSplit(n_splits=8, test_size=0.2, random_state=57)
-    return cv.split(X, y)
+"""
+Problem definition file for the custom challenge.
+
+This file implements:
+  - I/O methods (get_train_data and get_test_data) to load training and test data.
+    It uses the prepare_data module to obtain a DataLoader, converts the obtained
+    text embeddings and images (in tensor form) to NumPy arrays, and applies a quick-test
+    mode if specified.
+  - A cross-validation scheme (get_cv) to split the training data.
+"""
 
 
-def load_data(path='.', file='X_train.csv'):
-    path = Path(path) / "data"
-    X_df = pd.read_csv(path / file)
+def _get_data_from_prepare_data(text_file, image_dir):
+    """
+    Load data using the prepare_data module.
 
-    y = X_df['target']
-    X_df = X_df.drop(columns=['target'])
+    This function obtains a DataLoader, iterates over its batches converting
+    text embeddings and image tensors to NumPy arrays, and concatenates the results.
 
-    return X_df, y
+    Parameters
+    ----------
+    text_file : str
+        Path to the text file containing descriptions.
+    image_dir : str
+        Directory containing the images.
+
+    Returns
+    -------
+    X : numpy.ndarray
+        Array of text embeddings.
+    y : numpy.ndarray
+        Array of images.
+    """
+    dataloader = prepare_data(text_file, image_dir)
+    text_embeddings_list = []
+    image_list = []
+
+    for text_embedding, image_tensor in dataloader:
+        # Convert PyTorch tensors to NumPy arrays.
+        text_embeddings_list.append(text_embedding.numpy())
+        image_list.append(image_tensor.numpy())
+
+    # Concatenate all batches along the first (batch) dimension.
+    X = np.concatenate(text_embeddings_list, axis=0)
+    y = np.concatenate(image_list, axis=0)
+    return X, y
 
 
-# READ DATA
-def get_train_data(path='.'):
-    file = 'X_train.csv'
-    return load_data(path, file)
+def _get_data(path=".", split="train"):
+    """
+    Get the data for the given split (train or test).
+
+    Parameters
+    ----------
+    path : str, optional
+        Base path to the data directory. Default is the current directory.
+    split : str, optional
+        The data split to retrieve, either "train" or "test". Default is "train".
+
+    Returns
+    -------
+    X : numpy.ndarray
+        Array of text embeddings.
+    y : numpy.ndarray
+        Array of images.
+    """
+    if split == "train":
+        text_file = os.path.join(path, "data\public", "train\captions.txt")
+        image_dir = os.path.join(path, "data\public", "train")
+    elif split == "test":
+        text_file = os.path.join(path, "data\public", "test\captions.txt")
+        image_dir = os.path.join(path, "data\public", "test")
+    else:
+        raise ValueError("split must be either 'train' or 'test'")
+
+    X, y = _get_data_from_prepare_data(text_file, image_dir)
+
+    # If quick-test mode is enabled, only select a small subset of the data.
+    if os.environ.get("RAMP_TEST_MODE", False):
+        # For example, only use the first 20 samples.
+        X = X[:10]
+        y = y[:10]
+
+    return X, y
 
 
-def get_test_data(path='.'):
-    file = 'X_test.csv'
-    return load_data(path, file)
+def get_train_data(path="."):
+    """
+    Load the training data.
+
+    Parameters
+    ----------
+    path : str, optional
+        Base path to the data directory. Default is the current directory.
+
+    Returns
+    -------
+    X : numpy.ndarray
+        Array of text embeddings.
+    y : numpy.ndarray
+        Array of images.
+    """
+    return _get_data(path, split="train")
+
+
+def get_test_data(path="."):
+    """
+    Load the test data.
+
+    Parameters
+    ----------
+    path : str, optional
+        Base path to the data directory. Default is the current directory.
+
+    Returns
+    -------
+    X : numpy.ndarray
+        Array of text embeddings.
+    y : numpy.ndarray
+        Array of images.
+    """
+    return _get_data(path, split="test")
+
+
+def get_cv(X, y, random_state=42):
+    """
+    Get cross-validation splits using KFold.
+
+    This function defines a cross-validation scheme to split the training data.
+    Here we use KFold with shuffling to create 5 folds, setting a random seed
+    for reproducibility.
+
+    Parameters
+    ----------
+    X : array-like
+        Feature array.
+    y : array-like
+        Target array.
+    random_state : int, optional
+        Random seed for reproducibility. Default is 42.
+
+    Returns
+    -------
+    generator
+        A generator yielding (train_idx, test_idx) for each fold.
+    """
+    kf = KFold(n_splits=2, shuffle=True, random_state=random_state)
+    return kf.split(X)
