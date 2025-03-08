@@ -40,8 +40,8 @@ score_type_2 = utils.FID.FID(precision=3)
 # ]
 
 score_types = [
-    utils.FID.FID(precision=3),
-    # utils.clip_score.CLIPScore(precision=3),
+    #utils.FID.FID(precision=3),
+    utils.clip_score.CLIPScore(precision=3),
 ]
 
 

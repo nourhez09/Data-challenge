@@ -103,7 +103,7 @@ class CLIPScore(BaseScoreType):
         clip_score = 1.0 / (mean_cos_sim + 1e-8)
         return clip_score
     
-    def score_function(self,text_embeddings: np.ndarray, generated_images: np.ndarray) -> float:
-        X_test =  text_embeddings
-        y_test = generated_images.y_pred
+    def score_function(self, ground_truths, predictions) -> float:
+        X_test =  predictions.text_embeddings
+        y_test = predictions.y_pred
         return self.__call__(X_test, y_test)

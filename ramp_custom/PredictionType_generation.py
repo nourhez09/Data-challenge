@@ -18,7 +18,7 @@ class Generation(BasePrediction):
     It verifies that the images have the expected dimensions and provides
     functionality to combine multiple predictions (e.g., from cross-validation or ensembling).
     """
-    def __init__(self, y_pred=None, y_true=None, n_samples=None, img_shape=(3, 128, 128), fold_is=None):
+    def __init__(self, y_pred=None, y_true=None, n_samples=None, img_shape=(3, 128, 128), fold_is=None, text_embeddings=None):
         """
         Initialize the Generation object.
 
@@ -49,6 +49,7 @@ class Generation(BasePrediction):
         
         self.img_shape = img_shape
         self.check_y_pred_dimensions()
+        self.text_embeddings = text_embeddings
 
     def check_y_pred_dimensions(self):
         """
