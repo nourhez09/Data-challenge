@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.linalg import norm
-from .base import BaseScoreType
+from rampwf.score_types.base import BaseScoreType
 
 class CLIPScore(BaseScoreType):
     """
@@ -55,6 +55,7 @@ class CLIPScore(BaseScoreType):
         text_norm = text_embeddings / (norm(text_embeddings, axis=1, keepdims=True) + 1e-8)
         image_norm = image_embeddings / (norm(image_embeddings, axis=1, keepdims=True) + 1e-8)
         
+        text_norm = text_norm.numpy()
         # Compute cosine similarity for each sample
         cos_sim = np.sum(text_norm * image_norm, axis=1)
         mean_cos_sim = np.mean(cos_sim)

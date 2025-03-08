@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.linalg import sqrtm
-from .base import BaseScoreType
+from rampwf.score_types.base import BaseScoreType
 
 class FID(BaseScoreType):
     """
